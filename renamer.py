@@ -6,6 +6,7 @@
 from pathlib import Path
 from tinytag import TinyTag
 import sys
+from typing import Optional
 
 HELP_TEXT: str = """
 This program is used to rename music/video files using their metadata.
@@ -13,6 +14,16 @@ The format for running this program is:
 uv run renamer.py [INPUT DIRECTORY/FILE]
 If an input file is supplied, only that file will be renamed. If it is a directory, every mp3 or m4a file inside the directory will be recursively renamed.
 """
+
+def sanitize_filename(name: Optional[str]) -> str:
+    """Return a safe filename component by replacing characters illegal on Windows."""
+    if not name:
+        return "Unknown"
+    # Characters not allowed in filenames on Windows: <>:"/\\|?*
+    illegal = r'<>:"/\\|?*'
+    sanitized = ''.join(('-' if c in illegal else c) for c in name)
+    # Strip trailing spaces and dots which are problematic on Windows
+    return sanitized.rstrip(' .')
 
 def file_rename(path: Path) -> int:
     if not path.exists():
@@ -25,8 +36,11 @@ def file_rename(path: Path) -> int:
     if path.suffix not in (".mp3", ".m4a"):
         print(f"File {path} was not an .mp3 or .m4a file.")
         return 1
+
     file = TinyTag.get(path)
-    new_path = path.parents[0].joinpath(Path(f"{file.artist if (file.artist != None) else "Unknown"} - {file.title if (file.title != None) else "Unknown"}{path.suffix}"))
+    artist = sanitize_filename(file.artist)
+    title = sanitize_filename(file.title)
+    new_path = path.parents[0].joinpath(Path(f"{artist} - {title}{path.suffix}"))
     temp = new_path
     i: int = 1
     while temp.exists():
@@ -34,7 +48,10 @@ def file_rename(path: Path) -> int:
         temp = temp.parents[0].joinpath(Path(f"{temp.stem}({i}){path.suffix}"))
         i += 1
     new_path = temp
-    path.rename(new_path)
+    try:
+        path.rename(new_path)
+    except OSError as e:
+        print(f"Unable to rename {path} due to: {e}. May need to adjust manually.")
     return 0
 
 def dir_file_rename(dir_path: Path) -> int:
