@@ -1,0 +1,9 @@
+[project]
+name = "song-renamer"
+version = "0.1.0"
+description = "This simple program is used to parse music files for their metadata, and rename the files to a specific format."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "tinytag>=2.2.0",
+]
