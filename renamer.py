@@ -33,7 +33,7 @@ def file_rename(path: Path) -> int:
         print(f"Input path {path} was not a file.")
         return 1
     # Weed out unsupported files
-    if path.suffix not in (".mp3", ".m4a"):
+    if path.suffix not in (".mp3", ".m4a", ".wav"):
         print(f"File {path} was not an .mp3 or .m4a file.")
         return 1
 
